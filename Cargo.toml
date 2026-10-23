@@ -1,0 +1,50 @@
+[package]
+name = "handwave"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94.1"
+description = "Native webcam hand tracking (MediaPipe models via ONNX Runtime)"
+license = "Apache-2.0"
+
+# Dependencies are only added or upgraded to releases at least 14 days old
+# (checked against crates.io on 2026-10-23, i.e. published on or before 2026-10-09).
+[dependencies]
+thiserror = "2.0.21"
+clap = { version = "4.6.7", features = ["derive"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg"] }
+macroquad = { version = "0.4.16", default-features = false }
+nokhwa = { version = "0.10.11", features = ["input-avfoundation"] }
+# ort has only published release candidates. rc.13 (2026-07-28) is the newest
+# one that is at least 14 days old (rc.14 is 2026-10-12).
+ort = { version = "=2.0.0-rc.13", default-features = false, features = ["std", "download-binaries", "tls-native"] }
+
+[dev-dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+
+[lib]
+name = "handwave"
+
+[[bin]]
+name = "handwave"
+path = "src/main.rs"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+float_cmp = "deny"
+module_name_repetitions = "allow"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

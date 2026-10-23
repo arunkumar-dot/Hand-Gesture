@@ -1,0 +1,6 @@
+# Test code may use expect/unwrap/indexing/panic; production code may not (see [lints.clippy]).
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-indexing-slicing-in-tests = true
+allow-panic-in-tests = true
+doc-valid-idents = ["MediaPipe", "AVFoundation", "IoU", "ONNX", "SSD", "NMS", "ROI", "ROIs", "TFLite", "GitHub", ".."]

@@ -1,0 +1,9 @@
+# Exact pins. Python 3.12 (TensorFlow has no wheels for 3.14+).
+tensorflow==2.16.2
+tf2onnx==1.17.0
+onnx==1.16.1
+onnxruntime==1.18.1
+numpy==1.26.4
+protobuf==4.25.9
+mediapipe==0.10.21
+opencv-python==4.11.0.86
