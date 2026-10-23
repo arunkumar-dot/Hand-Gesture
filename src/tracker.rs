@@ -12,7 +12,7 @@ use crate::filter::LandmarkFilter;
 use crate::frame::{Frame, Rect};
 use crate::landmarks::{HandResult, Landmark, LandmarkModel};
 use crate::palm::PalmDetector;
-use crate::roi::{rect_from_landmarks, rect_from_palm, rect_iou};
+use crate::roi::{landmarks_bounds, rect_from_landmarks, rect_from_palm, rect_iou};
 use std::time::Instant;
 
 /// Whether the palm detector ran for a frame.
@@ -130,6 +130,9 @@ impl Tracker {
             if result.presence < PRESENCE_THRESHOLD {
                 continue; // hand lost
             }
+            if overlaps_a_hand(&hands, &result.landmarks) {
+                continue; // two tracks converged on one hand: keep the older one
+            }
             track.next_roi = rect_from_landmarks(&result.landmarks);
             used_rois.push(track.next_roi);
             hands.push(hand_from_mut(&mut track, &result, t));
@@ -157,7 +160,9 @@ impl Tracker {
                 let result = self.landmarks.run(frame, &roi)?;
                 landmark_ms.push(elapsed_ms(start));
                 used_rois.push(roi);
-                if result.presence < PRESENCE_THRESHOLD {
+                if result.presence < PRESENCE_THRESHOLD
+                    || overlaps_a_hand(&hands, &result.landmarks)
+                {
                     continue;
                 }
                 let mut track = Track {
@@ -180,6 +185,18 @@ impl Tracker {
             landmark_ms,
         })
     }
+}
+
+/// Whether `landmarks` sit on a hand that is already in `hands`.
+///
+/// The ROI check against palm detections can miss a duplicate (a palm ROI and a
+/// landmarks ROI of the same hand may overlap by just under [`DUPLICATE_IOU`]),
+/// so new and tracked hands are also compared by the boxes of their landmarks.
+fn overlaps_a_hand(hands: &[TrackedHand], landmarks: &[Landmark; NUM_LANDMARKS]) -> bool {
+    let bounds = landmarks_bounds(landmarks);
+    hands
+        .iter()
+        .any(|h| rect_iou(&landmarks_bounds(&h.raw), &bounds) > DUPLICATE_IOU)
 }
 
 fn hand_from_mut(track: &mut Track, result: &HandResult, t: f64) -> TrackedHand {

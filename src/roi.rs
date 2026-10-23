@@ -133,6 +133,26 @@ pub fn rect_from_landmarks(landmarks: &[Landmark; NUM_LANDMARKS]) -> Rect {
     transform_rect(&raw, LANDMARK_ROI_SCALE, LANDMARK_ROI_SHIFT_Y)
 }
 
+/// The axis-aligned box around all landmarks, as an unrotated [`Rect`].
+#[must_use]
+pub fn landmarks_bounds(landmarks: &[Landmark; NUM_LANDMARKS]) -> Rect {
+    let (mut min_x, mut max_x) = (f64::MAX, f64::MIN);
+    let (mut min_y, mut max_y) = (f64::MAX, f64::MIN);
+    for lm in landmarks {
+        min_x = min_x.min(lm.x);
+        max_x = max_x.max(lm.x);
+        min_y = min_y.min(lm.y);
+        max_y = max_y.max(lm.y);
+    }
+    Rect {
+        cx: f64::midpoint(min_x, max_x),
+        cy: f64::midpoint(min_y, max_y),
+        w: max_x - min_x,
+        h: max_y - min_y,
+        rotation: 0.0,
+    }
+}
+
 /// IoU of the axis-aligned bounds of two ROIs (`AssociationNormRectCalculator`
 /// compares rects without regard to rotation).
 #[must_use]
@@ -249,6 +269,13 @@ mod tests {
         let expected = (mid.0 + 20.0 * theta.sin(), mid.1 - 20.0 * theta.cos());
         assert!((r.cx - expected.0).abs() < 1e-9 && (r.cy - expected.1).abs() < 1e-9);
         assert!((r.w - 400.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn landmark_bounds_wrap_all_points() {
+        let b = landmarks_bounds(&hand_along(0.0, 200.0, (100.0, 300.0)));
+        assert!((b.cx - 100.0).abs() < 1e-9 && (b.cy - 200.0).abs() < 1e-9);
+        assert!(b.w.abs() < 1e-9 && (b.h - 200.0).abs() < 1e-9);
     }
 
     #[test]
